@@ -63,7 +63,7 @@ def dft_reconstruct(sparse, mask):
 # ========================
 # MAIN
 # ========================
-img_path = "Pictures\\512x512.2.jpg"
+img_path = "Pictures\\Images\\kodim03.png"
 img = imread(img_path) / 255.0
 
 seg = segment(img)

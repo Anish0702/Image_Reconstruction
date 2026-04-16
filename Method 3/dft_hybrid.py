@@ -16,22 +16,39 @@ def segment(img):
 # ========================
 # SAMPLING
 # ========================
-def hybrid_sampling(img, segments, ratio=0.15):
-    mask = np.zeros(segments.shape, dtype=bool)
+from skimage.segmentation import slic
 
-    for seg_id in np.unique(segments):
-        coords = np.argwhere(segments == seg_id)
+def hybrid_sampling(image, segments, ratio=0.15):
+    h, w = image.shape[:2]
+    mask = np.zeros((h, w), dtype=bool)
 
-        # centroid
+    total_samples = int(h * w * ratio)
+    num_segments = np.max(segments)
+
+    # -------------------------
+    # Step 1: small centroid portion (10%)
+    # -------------------------
+    centroid_count = int(0.1 * total_samples)
+
+    chosen_segments = np.random.choice(range(1, num_segments+1),
+                                       min(centroid_count, num_segments),
+                                       replace=False)
+
+    for i in chosen_segments:
+        coords = np.argwhere(segments == i)
+        if len(coords) == 0:
+            continue
         centroid = np.mean(coords, axis=0).astype(int)
         mask[centroid[0], centroid[1]] = True
 
-        # random points inside cluster
-        n = max(1, int(len(coords) * ratio))
-        chosen = coords[np.random.choice(len(coords), n, replace=False)]
+    # -------------------------
+    # Step 2: mostly random (90%)
+    # -------------------------
+    remaining = total_samples - np.sum(mask)
 
-        for c in chosen:
-            mask[c[0], c[1]] = True
+    if remaining > 0:
+        indices = np.random.choice(h * w, remaining, replace=False)
+        mask.flat[indices] = True
 
     return mask
 
@@ -75,7 +92,7 @@ def dft_reconstruct(sparse, mask):
 # ========================
 # MAIN
 # ========================
-img_path = "Pictures\\512x512.2.jpg"
+img_path = "Pictures\\Images\\kodim03.png"
 img = imread(img_path) / 255.0
 
 seg = segment(img)

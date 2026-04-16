@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from skimage import io, color, img_as_float
 from skimage.segmentation import slic
 from skimage.metrics import mean_squared_error, peak_signal_noise_ratio, structural_similarity
+from skimage.restoration import denoise_tv_chambolle
 
 # Set random seed for reproducibility
 np.random.seed(42)
@@ -16,7 +17,7 @@ def load_image(filepath):
 def segment_slic(image, n_segments, compactness=20):
     return slic(image, n_segments=n_segments, compactness=compactness, start_label=1)
 
-def sample_pixels(image, segments, ratio=0.15):
+def sample_pixels(image, segments, ratio=0.2):
     """Boundary Sampling
     Picks pixels along edges between superpixels.
     """
@@ -86,17 +87,24 @@ def reconstruct_cluster_aware(image, mask, segments):
             
     return np.clip(reconstructed, 0, 1)
 
+def smooth_image(image):
+    return denoise_tv_chambolle(
+        image,
+        weight=0.1,
+        channel_axis=2
+    )
+
 def evaluate_reconstruction(original, reconstructed):
     mse_val = mean_squared_error(original, reconstructed)
     psnr_val = peak_signal_noise_ratio(original, reconstructed, data_range=1.0)
     ssim_val = structural_similarity(original, reconstructed, data_range=1.0, channel_axis=2)
     return mse_val, psnr_val, ssim_val
 
-def run_pipeline(image_path, ratio=0.15):
+def run_pipeline(image_path, ratio=0.2):
     img = load_image(image_path)
     h, w = img.shape[:2]
     
-    n_segments = 3000
+    n_segments = 30000
     segments = segment_slic(img, n_segments=n_segments)
     
     mask = sample_pixels(img, segments, ratio)
@@ -107,6 +115,7 @@ def run_pipeline(image_path, ratio=0.15):
     sampled_img[mask_3d] = img[mask_3d]
     
     reconstructed = reconstruct_cluster_aware(img, mask, segments)
+    reconstructed = smooth_image(reconstructed)
     mse_val, psnr_val, ssim_val = evaluate_reconstruction(img, reconstructed)
     
     print("=== BOUNDARY SAMPLING (CLUSTER-AWARE RECON) ===")
@@ -144,7 +153,7 @@ def run_pipeline(image_path, ratio=0.15):
 if __name__ == '__main__':
     import skimage.data
     import os
-    sample_path = "C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg"
+    sample_path = "C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim02.png"
     if not os.path.exists(sample_path):
         io.imsave(sample_path, skimage.data.astronaut())
-    run_pipeline(sample_path, ratio=0.15)
+    run_pipeline(sample_path, ratio=0.2)

@@ -14,7 +14,7 @@ def load_image(filepath):
 
 from skimage.segmentation import slic
 
-def sample_pixels(image, ratio=0.15):
+def sample_pixels(image, ratio=0.2):
     """Uniform grid sampling"""
     h, w = image.shape[:2]
     mask = np.zeros((h, w), dtype=bool)
@@ -59,7 +59,7 @@ def evaluate_reconstruction(original, reconstructed):
     ssim_val = structural_similarity(original, reconstructed, data_range=1.0, channel_axis=2)
     return mse_val, psnr_val, ssim_val
 
-def run_pipeline(image_path, ratio=0.15):
+def run_pipeline(image_path, ratio=0.2):
     img = load_image(image_path)
     h, w = img.shape[:2]
 
@@ -100,4 +100,4 @@ def run_pipeline(image_path, ratio=0.15):
     plt.show()
 
 if __name__ == '__main__':
-    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg", ratio=0.15)
+    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim03.png", ratio=0.2)

@@ -16,15 +16,22 @@ from skimage.segmentation import slic
 
 from skimage.segmentation import slic
 
-def sample_pixels(image, ratio=0.15):
-    """Hybrid: centroid + random"""
+from skimage.segmentation import slic
+
+from skimage.segmentation import slic
+
+def sample_pixels(image, ratio=0.2):
+    """True Hybrid: centroid + uniform + slight randomness"""
+
     h, w = image.shape[:2]
     mask = np.zeros((h, w), dtype=bool)
 
     segments = slic(image, n_segments=500, compactness=20, start_label=1)
     num_segments = np.max(segments)
 
+    # -------------------------
     # Step 1: Centroids
+    # -------------------------
     for i in range(1, num_segments + 1):
         coords = np.argwhere(segments == i)
         if len(coords) == 0:
@@ -32,12 +39,32 @@ def sample_pixels(image, ratio=0.15):
         centroid = np.mean(coords, axis=0).astype(int)
         mask[centroid[0], centroid[1]] = True
 
-    # Step 2: Random fill
     remaining = int(h * w * ratio) - np.sum(mask)
 
-    if remaining > 0:
-        indices = np.random.choice(h * w, remaining, replace=False)
-        mask.flat[indices] = True
+    # -------------------------
+    # Step 2: Split remaining
+    # -------------------------
+    uniform_count = int(0.7 * remaining)
+    random_count = remaining - uniform_count
+
+    # -------------------------
+    # Step 3: Uniform grid (controlled)
+    # -------------------------
+    if uniform_count > 0:
+        step = int(np.sqrt((h * w) / uniform_count))
+
+        for i in range(0, h, step):
+            for j in range(0, w, step):
+                if not mask[i, j]:
+                    mask[i, j] = True
+
+    # -------------------------
+    # Step 4: Small randomness
+    # -------------------------
+    if random_count > 0:
+        available = np.where(~mask.flatten())[0]
+        chosen = np.random.choice(available, min(random_count, len(available)), replace=False)
+        mask.flat[chosen] = True
 
     return mask
 
@@ -73,7 +100,7 @@ def evaluate_reconstruction(original, reconstructed):
     ssim_val = structural_similarity(original, reconstructed, data_range=1.0, channel_axis=2)
     return mse_val, psnr_val, ssim_val
 
-def run_pipeline(image_path, ratio=0.15):
+def run_pipeline(image_path, ratio=0.2):
     img = load_image(image_path)
     h, w = img.shape[:2]
 
@@ -114,4 +141,4 @@ def run_pipeline(image_path, ratio=0.15):
     plt.show()
 
 if __name__ == '__main__':
-    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg", ratio=0.15)
+    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim03.png", ratio=0.2)

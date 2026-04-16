@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from skimage import io, color, img_as_float
 from skimage.segmentation import slic
 from skimage.metrics import mean_squared_error, peak_signal_noise_ratio, structural_similarity
+from skimage.restoration import denoise_tv_chambolle
 
 # Set random seed for reproducibility
 np.random.seed(42)
@@ -16,9 +17,9 @@ def load_image(filepath):
 def segment_slic(image, n_segments, compactness=20):
     return slic(image, n_segments=n_segments, compactness=compactness, start_label=1)
 
-def sample_pixels(image, segments, ratio=0.15):
+def sample_pixels(image, segments, ratio=0.2):
     """Random Sampling Methodology
-    Randomly select 15% of all pixels globally.
+    Randomly select 20% of all pixels globally.
     """
     h, w = image.shape[:2]
     mask = np.zeros((h, w), dtype=bool)
@@ -89,11 +90,11 @@ def evaluate_reconstruction(original, reconstructed):
     ssim_val = structural_similarity(original, reconstructed, data_range=1.0, channel_axis=2)
     return mse_val, psnr_val, ssim_val
 
-def run_pipeline(image_path, ratio=0.15):
+def run_pipeline(image_path, ratio=0.2):
     img = load_image(image_path)
     h, w = img.shape[:2]
     
-    n_segments = 3000
+    n_segments = 10000
     segments = segment_slic(img, n_segments=n_segments)
     
     mask = sample_pixels(img, segments, ratio)
@@ -141,7 +142,7 @@ def run_pipeline(image_path, ratio=0.15):
 if __name__ == '__main__':
     import skimage.data
     import os
-    sample_path = "C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg"
+    sample_path = "C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim04.png"
     if not os.path.exists(sample_path):
         io.imsave(sample_path, skimage.data.astronaut())
-    run_pipeline(sample_path, ratio=0.15)
+    run_pipeline(sample_path, ratio=0.2)

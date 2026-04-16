@@ -144,7 +144,7 @@ def run_pipeline(image_path, ratio=0.15):
 if __name__ == '__main__':
     import skimage.data
     import os
-    sample_path = "C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg"
+    sample_path = "C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim04.png"
     if not os.path.exists(sample_path):
         io.imsave(sample_path, skimage.data.astronaut())
     run_pipeline(sample_path, ratio=0.15)
