@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from skimage import io, color, img_as_float
 from skimage.segmentation import slic
 from skimage.metrics import mean_squared_error, peak_signal_noise_ratio, structural_similarity
+from skimage.restoration import denoise_tv_chambolle
 
 # Set random seed for reproducibility
 np.random.seed(42)
