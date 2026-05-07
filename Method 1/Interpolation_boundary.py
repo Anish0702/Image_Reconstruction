@@ -13,15 +13,11 @@ def load_image(filepath):
     return img_as_float(img)
 
 def sample_pixels(image, ratio=0.15):
-    """Uniform grid sampling"""
     h, w = image.shape[:2]
     mask = np.zeros((h, w), dtype=bool)
 
-    step = int(np.sqrt(1 / ratio))
-
-    for i in range(0, h, step):
-        for j in range(0, w, step):
-            mask[i, j] = True
+    indices = np.random.choice(h * w, int(h * w * ratio), replace=False)
+    mask.flat[indices] = True
 
     return mask
 
@@ -68,18 +64,44 @@ def run_pipeline(image_path, ratio=0.15):
     mask_3d = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
     sampled_img[mask_3d] = img[mask_3d]
 
+    from utils.admm_refinement import admm_refine
+
+    # ========================
+    # RECONSTRUCTION
+    # ========================
     reconstructed = reconstruct_interpolation(img, mask)
-    mse_val, psnr_val, ssim_val = evaluate_reconstruction(img, reconstructed)
+
+    # ========================
+    # ADMM REFINEMENT
+    # ========================
+    refined = admm_refine(reconstructed, img, mask)
+
+    # ========================
+    # METRICS (BOTH)
+    # ========================
+    mse_raw, psnr_raw, ssim_raw = evaluate_reconstruction(img, reconstructed)
+    mse_admm, psnr_admm, ssim_admm = evaluate_reconstruction(img, refined)
 
     print("=== INTERPOLATION METHOD ===")
     print(f"Sampling: {actual_ratio*100:.2f}%")
-    print(f"MSE:  {mse_val:.6f}")
-    print(f"PSNR: {psnr_val:.2f} dB")
-    print(f"SSIM: {ssim_val:.4f}")
+
+    print("\n--- RAW ---")
+    print(f"MSE:  {mse_raw:.6f}")
+    print(f"PSNR: {psnr_raw:.2f} dB")
+    print(f"SSIM: {ssim_raw:.4f}")
+
+    print("\n--- + ADMM ---")
+    print(f"MSE:  {mse_admm:.6f}")
+    print(f"PSNR: {psnr_admm:.2f} dB")
+    print(f"SSIM: {ssim_admm:.4f}")
+
     print("============================")
 
+    # ========================
+    # VISUALIZATION (4 PANELS)
+    # ========================
     plt.style.use('dark_background')
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig, axes = plt.subplots(1, 4, figsize=(22, 6))
 
     axes[0].imshow(img)
     axes[0].set_title("Original")
@@ -90,12 +112,22 @@ def run_pipeline(image_path, ratio=0.15):
     axes[1].axis('off')
 
     axes[2].imshow(reconstructed)
-    axes[2].set_title(f"Reconstructed\nPSNR: {psnr_val:.2f} | SSIM: {ssim_val:.3f}")
+    axes[2].set_title(f"Interpolation\nPSNR: {psnr_raw:.2f}")
     axes[2].axis('off')
 
+    axes[3].imshow(refined)
+    axes[3].set_title(f"+ ADMM\nPSNR: {psnr_admm:.2f}")
+    axes[3].axis('off')
+
     plt.tight_layout()
-    plt.savefig('Pictures\\Results\\Method 1\\interpolation_boundary.png', dpi=300)
+
+    # ========================
+    # SAVE
+    # ========================
+    plt.savefig('Pictures\\Results\\Method 1\\interpolation_comparison.png', dpi=300)
+    plt.imsave("Pictures\\Results\\Method 1\\interpolation_admm.png", refined)
+
     plt.show()
 
 if __name__ == '__main__':
-    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg", ratio=0.15)
+    run_pipeline("C:\\Users\\anish\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg", ratio=0.15)

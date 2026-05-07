@@ -96,4 +96,4 @@ def run_pipeline(image_path, ratio=0.2):
     plt.show()
 
 if __name__ == '__main__':
-    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim03.png", ratio=0.2)
+    run_pipeline("C:\\Users\\anish\\Downloads\\Image_Reconstruction\\Pictures\\Images\\kodim03.png", ratio=0.2)

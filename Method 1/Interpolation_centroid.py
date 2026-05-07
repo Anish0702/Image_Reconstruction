@@ -105,4 +105,4 @@ def run_pipeline(image_path, ratio=0.15):
     plt.show()
 
 if __name__ == '__main__':
-    run_pipeline("C:\\Users\\Win 11\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg", ratio=0.15)
+    run_pipeline("C:\\Users\\anish\\Downloads\\Image_Reconstruction\\Pictures\\512x512.2.jpg", ratio=0.15)
